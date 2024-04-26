@@ -41,6 +41,9 @@ copier copy gh:quickplates/nixos .
 - continuous integration with [`GitHub Actions`](https://github.com/features/actions)
 - easy to write and nice looking documentation
   with [`Docusaurus`](https://docusaurus.io)
+- secrets management with [`SOPS`](https://github.com/getsops/sops)
+- unattended system installation with customized scripts
+- previewing configs in virtual machines with [`QEMU`](https://www.qemu.org)
 
 ## 💻 Development
 
