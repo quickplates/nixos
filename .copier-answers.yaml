@@ -1,0 +1,12 @@
+# Changes here will be overwritten by Copier; NEVER EDIT MANUALLY
+_commit: 0.7.1
+_src_path: gh:quickplates/meta
+accountname: quickplates
+description: NixOS configs template ❄️
+example: true
+exampleaccountname: quickplates
+exampledescription: NixOS configs example ❄️
+examplereponame: nixos-example
+reponame: nixos
+repourl: https://github.com/quickplates/nixos
+type: generic
