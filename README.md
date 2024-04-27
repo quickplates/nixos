@@ -15,8 +15,7 @@ NixOS configs template ❄️
 ## 💡 About
 
 This repository contains a [`copier`](https://copier.readthedocs.io) template
-that can be used to create projects for
-[`quickplates`](https://github.com/quickplates).
+that can be used to create [`NixOS`](https://nixos.org) configurations.
 
 You can view the example of project generated from this template
 [**here**](https://github.com/quickplates/nixos-example).
