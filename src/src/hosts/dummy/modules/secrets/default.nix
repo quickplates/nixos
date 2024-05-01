@@ -1,7 +1,7 @@
 # Secrets configuration
 {inputs, ...}: {
   imports = [
-    # Import sops module
+    # Import sops modules
     inputs.sops-nix.nixosModules.sops
   ];
 
@@ -14,6 +14,7 @@
       sshKeyPaths = [];
     };
 
+    # Store encrypted secrets in this file in the repository
     defaultSopsFile = ./secrets.yaml;
 
     gnupg = {

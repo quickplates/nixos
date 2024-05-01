@@ -8,25 +8,24 @@
 }: {
   options = {
     installScript = lib.mkOption {
-      # Create shell script with some setup code added automatically
+      # Create shell script
       default = pkgs.writeShellApplication {
+        # Name of the script
         name = "install";
 
-        # pkgs.substituteAll returns a path to a file, so we need to read it
+        # Packages available in the script
+        runtimeInputs = [pkgs.coreutils pkgs.disko];
+
+        # Load the script with substituted values
         text = builtins.readFile (
-          # This is used to provide data to the script by replacing some strings
+          # Substitute values in the script
           pkgs.substituteAll {
+            # Use this file as source
             src = ./install.sh;
 
-            boot = config.constants.disk.partitions.boot.label;
-            disk = config.constants.disk.path;
+            # Provide values to substitute
             flake = inputs.self;
             host = config.constants.name;
-            main = config.constants.disk.partitions.main.label;
-            mkfsext4 = "${pkgs.e2fsprogs}/bin/mkfs.ext4";
-            mkfsfat = "${pkgs.dosfstools}/bin/mkfs.fat";
-            nixosinstall = "${pkgs.nixos-install-tools}/bin/nixos-install";
-            parted = "${pkgs.parted}/bin/parted";
           }
         );
       };
