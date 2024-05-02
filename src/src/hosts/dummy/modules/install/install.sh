@@ -1,21 +1,9 @@
-#!/bin/sh
+#!/usr/bin/env bash
 
 ### CONFIGURATION ###
 
-# Don't try to make the script self-contained
-# Just assume some binaries are already available
-# First, this reduces the size down
-# Second, some things need to be compatible with the host system
-
-BOOT='@boot@'
-DISK='@disk@'
-FLAKEDIR='@flake@'
-HOSTNAME='@host@'
-MAIN='@main@'
-MKFSEXT4='@mkfsext4@'
-MKFSFAT='@mkfsfat@'
-NIXOSINSTALL='@nixosinstall@'
-PARTED='@parted@'
+FLAKE='@flake@'
+HOST='@host@'
 
 ### HELPER FUNCTIONS ###
 
@@ -23,21 +11,27 @@ print_usage() {
 	# Print script usage
 
 	cat <<EOF
-Usage: $0 [-k KEYFILE]
-Install NixOS on a host.
+Usage: $0 --main DEVICE [-k KEYFILE] [OPTIONS]
+Install the system on this machine.
 
-    -k, --key               path to the age key file (if not specified, taken from \$SOPS_AGE_KEY_FILE)
+    --main                  path to the device with the main disk
+	-k, --keyfile           path to the age key file
 EOF
 }
 
 ### PARSE ARGUMENTS ###
 
-keyfile="${SOPS_AGE_KEY_FILE:-${XDG_CONFIG_HOME:-${HOME}/.config}/sops/age/keys.txt}}"
+main=''
+keyfile="${SOPS_AGE_KEY_FILE:-${SOPS_AGE_KEY_DIR:-${XDG_CONFIG_HOME:-${HOME}/.config}/sops/age}/keys.txt}"
 unparsed=''
 
-while [ -n "${1:-}" ]; do
+while [[ -n ${1:-} ]]; do
 	case "$1" in
-	-k | --key)
+	--main)
+		shift
+		main="$1"
+		;;
+	-k | --keyfile)
 		shift
 		keyfile="$1"
 		;;
@@ -58,105 +52,29 @@ done
 # shellcheck disable=SC2086
 set -- ${unparsed}
 
-### CLEANUP ###
-
-printf '%s\n' 'Cleaning up old state'
-
-# remove old age key if exists
-rm --force /mnt/var/lib/sops/age/keys.txt
-
-# unmount everything
-mountpoint --quiet /mnt/ && umount --recursive /mnt/
-
-### PARTITIONING ###
-
-printf '%s\n' "Partitioning disk ${DISK}"
-
-# partition the disk
-# use GPT to store partition metadata
-# boot partition at the beginning
-# and the rest is for the main partition
-if ! ${PARTED} --script --align optimal "${DISK}" -- \
-	mklabel gpt \
-	mkpart "${BOOT}" fat32 1MB 512MB \
-	set 1 boot on \
-	set 1 esp on \
-	mkpart "${MAIN}" 512MB 100%; then
-	printf '%s\n' "Partitioning disk ${DISK} failed" >&2
+if [[ -z ${main} ]]; then
+	printf '%s\n' 'Error: --main is required.' >&2
+	print_usage >&2
 	exit 1
 fi
 
-# force udev to reread partition table
-udevadm trigger
-
-printf '%s' 'Waiting for partitions to appear...'
-while [ ! -e "/dev/disk/by-partlabel/${BOOT}" ] ||
-	[ ! -e "/dev/disk/by-partlabel/${MAIN}" ]; do
-	sleep 1
-	printf '%s' '.'
-done
-printf '\n'
-
-printf '%s\n' 'Partitioning complete'
-
-### FORMATTING ###
-
-# format the partitions with appropriate filesystems
-# note that referring to devices by by-partlabel works only when using GPT
-
-printf '%s\n' "Formatting /dev/disk/by-partlabel/${BOOT} with FAT32"
-
-# fat32 for the boot partition
-if ! ${MKFSFAT} -c -F 32 -n "${BOOT}" "/dev/disk/by-partlabel/${BOOT}"; then
-	printf '%s\n' "Formatting /dev/disk/by-partlabel/${BOOT} failed" >&2
+if [[ ! -e ${main} ]]; then
+	printf '%s\n' "Error: Device ${main} does not exist." >&2
+	print_usage >&2
 	exit 2
 fi
 
-printf '%s\n' "Formatting /dev/disk/by-partlabel/${MAIN} with ext4"
-
-# ext4 for the main partition
-if ! ${MKFSEXT4} -L "${MAIN}" "/dev/disk/by-partlabel/${MAIN}"; then
-	printf '%s\n' "Formatting /dev/disk/by-partlabel/${MAIN} failed" >&2
+if [[ ! -e ${keyfile} ]]; then
+	printf '%s\n' "Error: Key file ${keyfile} does not exist." >&2
+	print_usage >&2
 	exit 3
 fi
 
-# force udev to reread filesystems
-udevadm trigger
+### MAIN ###
 
-printf '%s' 'Waiting for filesystems to appear...'
-while [ ! -e "/dev/disk/by-label/${BOOT}" ] ||
-	[ ! -e "/dev/disk/by-label/${MAIN}" ]; do
-	sleep 1
-	printf '%s' '.'
-done
-printf '\n'
-
-printf '%s\n' 'Formatting complete'
-
-### PREPARATION ###
-
-printf '%s\n' 'Mounting filesystems'
-
-# mount everything
-if ! mount --types ext4 "/dev/disk/by-label/${MAIN}" /mnt/ ||
-	! mkdir --parents /mnt/boot/ ||
-	! mount --types vfat "/dev/disk/by-label/${BOOT}" /mnt/boot/; then
-	printf '%s\n' 'Mounting filesystems failed' >&2
-	exit 4
-fi
-
-printf '%s\n' 'Copying age keys'
-
-# copy age keys
-if ! mkdir --parents /mnt/var/lib/sops/age ||
-	! cp "${keyfile}" /mnt/var/lib/sops/age/keys.txt; then
-	printf '%s\n' 'Copying age keys failed' >&2
-	exit 5
-fi
-
-### INSTALLATION ###
-
-printf '%s\n' 'Installing NixOS'
-
-# install
-${NIXOSINSTALL} --no-root-passwd --flake "${FLAKEDIR}#${HOSTNAME}" "$@"
+disko-install \
+	--flake "${FLAKE}#${HOST}" \
+	--disk main "${main}" \
+	--extra-files "${keyfile}" /var/lib/sops/age/keys.txt \
+	--write-efi-boot-entries \
+	"$@"
