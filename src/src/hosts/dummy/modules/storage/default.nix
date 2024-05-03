@@ -1,5 +1,9 @@
 # Storage configuration
-{inputs, ...}: {
+{
+  config,
+  inputs,
+  ...
+}: {
   imports = [
     # Import Disko modules
     inputs.disko.nixosModules.disko
@@ -10,46 +14,52 @@
       disk = {
         main = {
           content = {
-            # Use GPT partition table
-            type = "gpt";
-
             partitions = {
               boot = {
-                # Size of the boot partition
-                size = "512M";
-
-                # EFI system partition
-                type = "EF00";
-
                 content = {
-                  # This partition contains a filesystem
-                  type = "filesystem";
-
                   # Format the partition as FAT
                   format = "vfat";
 
                   # Mount the partition at /boot
                   mountpoint = "/boot";
+
+                  # This partition contains a filesystem
+                  type = "filesystem";
                 };
+
+                # Size of the boot partition
+                size = "1G";
+
+                # EFI system partition
+                type = "EF00";
               };
 
               main = {
-                # Use the rest of the disk for the main partition
-                size = "100%";
-
                 content = {
-                  # This partition contains a filesystem
-                  type = "filesystem";
-
                   # Format the partition as ext4
                   format = "ext4";
 
                   # Mount the partition at /
                   mountpoint = "/";
+
+                  # This partition contains a filesystem
+                  type = "filesystem";
                 };
+
+                # Use the rest of the disk for the main partition
+                size = "100%";
+
+                # Linux filesystem partition
+                type = "8300";
               };
             };
+
+            # Use GPT partition table
+            type = "gpt";
           };
+
+          device = config.constants.storage.disks.main.device;
+          type = "disk";
         };
       };
     };
