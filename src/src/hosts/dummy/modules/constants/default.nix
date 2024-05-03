@@ -24,6 +24,18 @@
         type = lib.types.str;
       };
 
+      storage = {
+        disks = {
+          main = {
+            device = lib.mkOption {
+              default = "/dev/sda";
+              description = "Device path of the main disk";
+              type = lib.types.str;
+            };
+          };
+        };
+      };
+
       vm = {
         cpu = {
           cores = lib.mkOption {
