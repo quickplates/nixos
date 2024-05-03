@@ -3,11 +3,11 @@
   nix = {
     settings = {
       experimental-features = [
-        # Enable commands
-        "nix-command"
-
         # Enable flakes
         "flakes"
+
+        # Enable commands
+        "nix-command"
       ];
     };
   };
