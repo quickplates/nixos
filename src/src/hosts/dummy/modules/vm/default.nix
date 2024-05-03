@@ -27,13 +27,13 @@
 
         # Shared directories between the virtual machine and your development machine
         sharedDirectories = {
-          # This is needed to transmit your age private key to the virtual machine
-          age-key = {
-            # The private key should be stored at this path on your development machine
-            source = "\${SOPS_AGE_KEY_DIR:-\${XDG_CONFIG_HOME:-$HOME/.config}/sops/age}";
+          # This is needed to transmit your age private keys to the virtual machine
+          sops-age-keys = {
+            # The private keys should be stored at this path on your development machine
+            source = "\${SOPS_AGE_KEY_DIR:-\${XDG_CONFIG_HOME:-$HOME/.config/}/sops/age/}";
 
             # And will be mounted in the virtual machine at this path
-            target = "/var/lib/sops/age";
+            target = builtins.dirOf config.constants.secrets.sops.age.file;
           };
         };
       };

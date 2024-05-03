@@ -24,6 +24,18 @@
         type = lib.types.str;
       };
 
+      secrets = {
+        sops = {
+          age = {
+            file = lib.mkOption {
+              default = "/var/lib/sops/age/keys.txt";
+              description = "Path to the file with private age keys";
+              type = lib.types.str;
+            };
+          };
+        };
+      };
+
       storage = {
         disks = {
           main = {

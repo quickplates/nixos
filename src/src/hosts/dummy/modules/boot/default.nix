@@ -6,10 +6,10 @@
       availableKernelModules = [
         # These were autodetected by nixos-generate-config
         "ahci"
-        "xhci_pci"
-        "virtio_pci"
         "sr_mod"
+        "virtio_pci"
         "virtio_blk"
+        "xhci_pci"
       ];
     };
 
