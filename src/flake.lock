@@ -86,6 +86,7 @@
     },
     "root": {
       "inputs": {
+        "disko": "disko",
         "flake-parts": "flake-parts",
         "multiverse": "multiverse",
         "nixpkgs": "nixpkgs",
